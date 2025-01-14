@@ -72,7 +72,7 @@ class Book(SQLModel, table=True):
      page_count: int
      language: str
      user_uid: Optional[uuid.UUID] = Field(default=None, foreign_key='user.uid')
-     created_date: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
+     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
      updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
      user: Optional[User] = Relationship(
           back_populates='book', sa_relationship_kwargs={'lazy': 'selectin'}
