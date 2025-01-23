@@ -21,4 +21,10 @@ from src.errors import (
 
 user_service = UserService()
 
+class TokenBearer(HTTPBearer):
+     def __init__(self, auto_error=True):
+          super().__init__(auto_error=auto_error)
+          
+
+
 
