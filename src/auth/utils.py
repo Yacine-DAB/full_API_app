@@ -18,6 +18,10 @@ def generate_passwrd_hash(password: str) -> str:
      
      return hash
 
+def verify_password(passwrod: str, hash: str) -> bool:
+     return passwd_context.verify(passwrod, hash)
+
+
 def create_access_token(
      user_data: dict,
      expiry: timedelta = None,
