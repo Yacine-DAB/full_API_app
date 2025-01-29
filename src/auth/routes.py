@@ -96,3 +96,82 @@ async def create_user_account(
      }
      
      
+     
+@auth_router.get('/verify/'{token})
+async def verify_user_token(token: str, session: AsyncSession = Depends(get_session)):
+     
+     token_data = decode_url_safe_token(token)
+     
+     user_mail = token_data.get('email')
+     
+     if user_mail:
+          user = await user_service.get_user_by_email(user_email, session)
+          return JSONResponse(
+               content={'message': 'Account verified successfully'},
+               status_code=status.HTTP_200_OK,
+          )
+          
+     return JSONResponse(
+          content={'message': 'Account verified successfully'},
+          status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+     )
+     
+@auth_router.post('/login/')
+async def login_users(
+     login_data: UserLoginModel,
+     session: AsyncSession = Depends(get_session),
+):
+     email = login_data.email
+     password = login_data.password
+     
+     user = await user_service.get_user_by_email(email, session)
+     
+     if user is not None:
+          password_valid = verify_password(
+               password,
+               user.password_hash
+          )
+          
+          if password_valid:
+               access_token = create_access_token(
+                    user_data={
+                         'email': user.email,
+                         'user_id': str(user.uid),
+                         'role': user.role,
+                    },
+               )
+               
+               refresh_token = create_access_token(
+                    user_data={
+                         'email': user.email,
+                         'user_uid': str(user.uid)
+                         },
+                    refresh=True,
+                    expiry=timedelta(days=REFRESH_TOKEN_EXPIRY),  
+               )
+               
+               return JSONResponse(
+                    content={
+                         'message': 'Login successful',
+                         'access_token': access_token,
+                         'refresh_token': refresh_token,
+                         'user': {'email': user.email, 'uid': str(user.uid)},
+                    },
+               )
+               
+     raise InvalidCredentials()
+               
+@auth_router.get('/refresh_token')
+async def get_new_access_token(token_details: dict = Depends(RefreshTokenBearer())):
+     expiry_timestamp = token_details['exp']
+     
+     if datetime.fromtimestamp(expiry_timestamp) > datetime.now():
+          new_access_token = create_access_token(
+               user_data=token_details['user']
+          )
+          
+          return JSONResponse(
+               content={'access_token': new_access_token}
+          )
+     raise InvalidToken
+
